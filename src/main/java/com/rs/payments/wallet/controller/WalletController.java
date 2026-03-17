@@ -50,6 +50,7 @@ public class WalletController {
         )
         }
     )
+
     
     @PostMapping
     public ResponseEntity<Wallet> createWallet(@Valid @RequestBody CreateWalletRequest request) {
