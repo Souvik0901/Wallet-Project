@@ -36,20 +36,21 @@ public class WalletController {
     }
 
     @Operation(
-            summary = "Create a new wallet for a user",
-            description = "Creates a new wallet for the specified user ID with a zero balance.",
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Wallet created successfully",
-                            content = @Content(schema = @Schema(implementation = Wallet.class))
-                    ),
-                    @ApiResponse(
-                            responseCode = "404",
-                            description = "User not found"
-                    )
-            }
+        summary = "Create a new wallet for a user",
+        description = "Creates a new wallet for the specified user ID with a zero balance.",
+        responses = {
+        @ApiResponse(
+                responseCode = "200",
+                description = "Wallet created successfully",
+                content = @Content(schema = @Schema(implementation = Wallet.class))
+        ),
+        @ApiResponse(
+                responseCode = "404",
+                description = "User not found"
+        )
+        }
     )
+    
     @PostMapping
     public ResponseEntity<Wallet> createWallet(@Valid @RequestBody CreateWalletRequest request) {
         Wallet wallet = walletService.createWalletForUser(request.getUserId());
