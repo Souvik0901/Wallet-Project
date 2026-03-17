@@ -71,92 +71,87 @@ class WalletServiceImplTest {
     }
     
 
-    @Test
-    @DisplayName("Should deposit amount and update wallet balance")
-    void shouldDepositAmountSuccessfully() {
-
-        UUID walletId = UUID.randomUUID();
-
-        Wallet wallet = new Wallet();
-        wallet.setId(walletId);
-        wallet.setBalance(BigDecimal.valueOf(100));
-
-        when(walletRepository.findById(walletId)).thenReturn(Optional.of(wallet));
-        when(walletRepository.save(wallet)).thenReturn(wallet);
-
-        Wallet result = walletService.deposit(walletId, BigDecimal.valueOf(50));
-
-        assertEquals(BigDecimal.valueOf(150), result.getBalance());
-
-        verify(walletRepository).findById(walletId);
-        verify(walletRepository).save(wallet);
-    }
-
 
     @Test
-    @DisplayName("Should throw exception when depositing to non-existing wallet")
-    void shouldThrowExceptionWhenDepositWalletNotFound() {
-
+    @DisplayName("Should deposit money into wallet")
+    void shouldDeposit() {
         UUID walletId = UUID.randomUUID();
-
-        when(walletRepository.findById(walletId)).thenReturn(Optional.empty());
-
-        assertThrows(ResourceNotFoundException.class,
-                () -> walletService.deposit(walletId, BigDecimal.valueOf(50)));
-
-        verify(walletRepository).findById(walletId);
-        verify(walletRepository, never()).save(any());
-    }
-
-
-    @Test
-    @DisplayName("Should withdraw amount successfully")
-    void shouldWithdrawSuccessfully() {
-
-        UUID walletId = UUID.randomUUID();
-
-        Wallet wallet = new Wallet();
-        wallet.setId(walletId);
-        wallet.setBalance(BigDecimal.valueOf(100));
-
-        when(walletRepository.findById(walletId)).thenReturn(Optional.of(wallet));
-        when(walletRepository.save(wallet)).thenReturn(wallet);
-
-        Wallet result = walletService.withdraw(walletId, BigDecimal.valueOf(40));
-
-        assertEquals(BigDecimal.valueOf(60), result.getBalance());
-
-        verify(walletRepository).findById(walletId);
-        verify(walletRepository).save(wallet);
-    }
-
-
-    @Test
-    @DisplayName("Should throw exception when balance is insufficient")
-    void shouldThrowExceptionWhenInsufficientBalance() {
-
-        UUID walletId = UUID.randomUUID();
-
         Wallet wallet = new Wallet();
         wallet.setId(walletId);
         wallet.setBalance(BigDecimal.valueOf(50));
 
         when(walletRepository.findById(walletId)).thenReturn(Optional.of(wallet));
+        when(walletRepository.save(wallet)).thenReturn(wallet);
 
-        assertThrows(RuntimeException.class,
-                () -> walletService.withdraw(walletId, BigDecimal.valueOf(100)));
+        Wallet updatedWallet = walletService.deposit(walletId, BigDecimal.valueOf(100));
 
+        assertEquals(BigDecimal.valueOf(150), updatedWallet.getBalance());
         verify(walletRepository).findById(walletId);
+        verify(walletRepository).save(wallet);
+    }
+
+    @Test
+    @DisplayName("Deposit should fail when wallet not found")
+    void depositWalletNotFound() {
+        UUID walletId = UUID.randomUUID();
+        when(walletRepository.findById(walletId)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> walletService.deposit(walletId, BigDecimal.valueOf(50)));
+
         verify(walletRepository, never()).save(any());
     }
 
+    @Test
+    @DisplayName("Should withdraw money from wallet")
+    void shouldWithdraw() {
+        UUID walletId = UUID.randomUUID();
+        Wallet wallet = new Wallet();
+        wallet.setId(walletId);
+        wallet.setBalance(BigDecimal.valueOf(100));
+
+        when(walletRepository.findById(walletId)).thenReturn(Optional.of(wallet));
+        when(walletRepository.save(wallet)).thenReturn(wallet);
+
+        Wallet updatedWallet = walletService.withdraw(walletId, BigDecimal.valueOf(50));
+
+        assertEquals(BigDecimal.valueOf(50), updatedWallet.getBalance());
+        verify(walletRepository).findById(walletId);
+        verify(walletRepository).save(wallet);
+    }
 
     @Test
-    @DisplayName("Should return wallet balance")
-    void shouldReturnWalletBalance() {
-
+    @DisplayName("Withdraw should fail when wallet not found")
+    void withdrawWalletNotFound() {
         UUID walletId = UUID.randomUUID();
+        when(walletRepository.findById(walletId)).thenReturn(Optional.empty());
 
+        assertThrows(ResourceNotFoundException.class,
+                () -> walletService.withdraw(walletId, BigDecimal.valueOf(50)));
+
+        verify(walletRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Withdraw should fail when insufficient balance")
+    void withdrawInsufficientBalance() {
+        UUID walletId = UUID.randomUUID();
+        Wallet wallet = new Wallet();
+        wallet.setId(walletId);
+        wallet.setBalance(BigDecimal.valueOf(30));
+
+        when(walletRepository.findById(walletId)).thenReturn(Optional.of(wallet));
+
+        assertThrows(RuntimeException.class,
+                () -> walletService.withdraw(walletId, BigDecimal.valueOf(50)));
+
+        verify(walletRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Should get wallet balance")
+    void shouldGetBalance() {
+        UUID walletId = UUID.randomUUID();
         Wallet wallet = new Wallet();
         wallet.setId(walletId);
         wallet.setBalance(BigDecimal.valueOf(200));
@@ -166,20 +161,99 @@ class WalletServiceImplTest {
         BigDecimal balance = walletService.getBalance(walletId);
 
         assertEquals(BigDecimal.valueOf(200), balance);
-
         verify(walletRepository).findById(walletId);
     }
 
-
     @Test
-    @DisplayName("Should throw exception when wallet not found during balance inquiry")
-    void shouldThrowExceptionWhenWalletNotFound() {
-
+    @DisplayName("Get balance should fail when wallet not found")
+    void getBalanceWalletNotFound() {
         UUID walletId = UUID.randomUUID();
-
         when(walletRepository.findById(walletId)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
                 () -> walletService.getBalance(walletId));
+
+        verify(walletRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Should transfer money between wallets")
+    void shouldTransfer() {
+        UUID fromId = UUID.randomUUID();
+        UUID toId = UUID.randomUUID();
+
+        Wallet fromWallet = new Wallet();
+        fromWallet.setId(fromId);
+        fromWallet.setBalance(BigDecimal.valueOf(100));
+
+        Wallet toWallet = new Wallet();
+        toWallet.setId(toId);
+        toWallet.setBalance(BigDecimal.valueOf(50));
+
+        when(walletRepository.findById(fromId)).thenReturn(Optional.of(fromWallet));
+        when(walletRepository.findById(toId)).thenReturn(Optional.of(toWallet));
+        when(walletRepository.save(fromWallet)).thenReturn(fromWallet);
+        when(walletRepository.save(toWallet)).thenReturn(toWallet);
+
+        walletService.transfer(fromId, toId, BigDecimal.valueOf(75));
+
+        assertEquals(BigDecimal.valueOf(25), fromWallet.getBalance());
+        assertEquals(BigDecimal.valueOf(125), toWallet.getBalance());
+        verify(walletRepository).save(fromWallet);
+        verify(walletRepository).save(toWallet);
+    }
+
+    @Test
+    @DisplayName("Transfer should fail when source wallet not found")
+    void transferSourceWalletNotFound() {
+        UUID fromId = UUID.randomUUID();
+        UUID toId = UUID.randomUUID();
+
+        when(walletRepository.findById(fromId)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> walletService.transfer(fromId, toId, BigDecimal.valueOf(50)));
+
+        verify(walletRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Transfer should fail when destination wallet not found")
+    void transferDestinationWalletNotFound() {
+        UUID fromId = UUID.randomUUID();
+        UUID toId = UUID.randomUUID();
+        Wallet fromWallet = new Wallet();
+        fromWallet.setId(fromId);
+        fromWallet.setBalance(BigDecimal.valueOf(100));
+
+        when(walletRepository.findById(fromId)).thenReturn(Optional.of(fromWallet));
+        when(walletRepository.findById(toId)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> walletService.transfer(fromId, toId, BigDecimal.valueOf(50)));
+
+        verify(walletRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Transfer should fail when insufficient balance")
+    void transferInsufficientBalance() {
+        UUID fromId = UUID.randomUUID();
+        UUID toId = UUID.randomUUID();
+        Wallet fromWallet = new Wallet();
+        fromWallet.setId(fromId);
+        fromWallet.setBalance(BigDecimal.valueOf(30));
+
+        Wallet toWallet = new Wallet();
+        toWallet.setId(toId);
+        toWallet.setBalance(BigDecimal.valueOf(50));
+
+        when(walletRepository.findById(fromId)).thenReturn(Optional.of(fromWallet));
+        when(walletRepository.findById(toId)).thenReturn(Optional.of(toWallet));
+
+        assertThrows(RuntimeException.class,
+                () -> walletService.transfer(fromId, toId, BigDecimal.valueOf(50)));
+
+        verify(walletRepository, never()).save(any());
     }
 }
