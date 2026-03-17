@@ -1,5 +1,7 @@
 package com.rs.payments.wallet;
 
+import java.util.TimeZone;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
@@ -10,6 +12,7 @@ import io.swagger.v3.oas.annotations.info.Info;
 public class WalletServiceApplication {
 
     public static void main(String[] args) {
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Kolkata"));
         SpringApplication.run(WalletServiceApplication.class, args);
     }
 

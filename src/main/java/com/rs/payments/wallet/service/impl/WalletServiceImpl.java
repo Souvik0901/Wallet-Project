@@ -8,6 +8,7 @@ import com.rs.payments.wallet.repository.WalletRepository;
 import com.rs.payments.wallet.service.WalletService;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
@@ -32,7 +33,19 @@ public class WalletServiceImpl implements WalletService {
         wallet.setUser(user);
         user.setWallet(wallet);
 
-        user = userRepository.save(user); // Cascade saves wallet
+        user = userRepository.save(user);
         return user.getWallet();
+    }
+
+    @Override
+    @Transactional
+    public Wallet deposit(UUID walletId, BigDecimal amount) {
+
+        Wallet wallet = walletRepository.findById(walletId)
+                .orElseThrow(() -> new ResourceNotFoundException("Wallet not found"));
+
+        wallet.setBalance(wallet.getBalance().add(amount));
+
+        return walletRepository.save(wallet);
     }
 }
