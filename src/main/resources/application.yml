@@ -6,7 +6,7 @@ spring:
   application:
     name: wallet-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/walletdb
+    url: jdbc:postgresql://localhost:5432/walletdb?options=-c%20TimeZone=Asia/Kolkata
     username: user
     password: s3cr3t
     driver-class-name: org.postgresql.Driver
