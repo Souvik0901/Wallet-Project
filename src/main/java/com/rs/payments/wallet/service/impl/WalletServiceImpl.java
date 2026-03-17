@@ -48,4 +48,51 @@ public class WalletServiceImpl implements WalletService {
 
         return walletRepository.save(wallet);
     }
+
+    @Override
+    @Transactional
+    public Wallet withdraw(UUID walletId, BigDecimal amount) {
+
+        Wallet wallet = walletRepository.findById(walletId)
+                .orElseThrow(() -> new ResourceNotFoundException("Wallet not found"));
+
+        if (wallet.getBalance().compareTo(amount) < 0) {
+            throw new RuntimeException("Insufficient balance");
+        }
+
+        wallet.setBalance(wallet.getBalance().subtract(amount));
+
+        return walletRepository.save(wallet);
+    }
+
+    @Override
+    public BigDecimal getBalance(UUID walletId) {
+
+        Wallet wallet = walletRepository.findById(walletId)
+                .orElseThrow(() -> new ResourceNotFoundException("Wallet not found"));
+
+        return wallet.getBalance();
+    }
+
+    
+    @Override
+    @Transactional
+    public void transfer(UUID fromWalletId, UUID toWalletId, BigDecimal amount) {
+
+        Wallet fromWallet = walletRepository.findById(fromWalletId)
+                .orElseThrow(() -> new ResourceNotFoundException("Source wallet not found"));
+
+        Wallet toWallet = walletRepository.findById(toWalletId)
+                .orElseThrow(() -> new ResourceNotFoundException("Destination wallet not found"));
+
+        if (fromWallet.getBalance().compareTo(amount) < 0) {
+            throw new RuntimeException("Insufficient balance");
+        }
+
+        fromWallet.setBalance(fromWallet.getBalance().subtract(amount));
+        toWallet.setBalance(toWallet.getBalance().add(amount));
+
+        walletRepository.save(fromWallet);
+        walletRepository.save(toWallet);
+    }
 }
